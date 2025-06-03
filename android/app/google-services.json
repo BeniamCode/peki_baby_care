@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "709454915450",
+    "project_id": "pegki-e0872",
+    "storage_bucket": "pegki-e0872.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:709454915450:android:58420ba410ef26e1ce58c3",
+        "android_client_info": {
+          "package_name": "com.example.peki_baby_care"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGDrB1w4fC7X7HRWd7QsMbW4kLmjyWyyQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
