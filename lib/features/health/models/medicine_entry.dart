@@ -49,6 +49,12 @@ class MedicineEntry {
     required this.createdBy,
   });
 
+  // Compatibility getters
+  DateTime get time => givenAt;
+  String get name => medicineName;
+  DateTime get administeredAt => givenAt;
+  DateTime get timeAdministered => givenAt;
+
   factory MedicineEntry.fromMap(Map<String, dynamic> map, String id) {
     return MedicineEntry(
       id: id,
@@ -82,6 +88,39 @@ class MedicineEntry {
     );
   }
 
+  factory MedicineEntry.fromJson(Map<String, dynamic> json) {
+    return MedicineEntry(
+      id: json['id'] ?? '',
+      babyId: json['babyId'] ?? '',
+      medicineName: json['medicineName'] ?? '',
+      type: MedicineType.values.firstWhere(
+        (t) => t.toString().split('.').last == json['type'],
+        orElse: () => MedicineType.liquid,
+      ),
+      dosage: (json['dosage'] ?? 0).toDouble(),
+      unit: MedicineUnit.values.firstWhere(
+        (u) => u.toString().split('.').last == json['unit'],
+        orElse: () => MedicineUnit.ml,
+      ),
+      givenAt: DateTime.parse(json['givenAt']),
+      prescribedBy: json['prescribedBy'],
+      reason: json['reason'],
+      nextDoseTime: json['nextDoseTime'] != null 
+          ? DateTime.parse(json['nextDoseTime'])
+          : null,
+      frequency: json['frequency'] != null
+          ? MedicineFrequency.values.firstWhere(
+              (f) => f.toString().split('.').last == json['frequency'],
+              orElse: () => MedicineFrequency.asNeeded,
+            )
+          : null,
+      isCompleted: json['isCompleted'] ?? false,
+      notes: json['notes'],
+      createdAt: DateTime.parse(json['createdAt']),
+      createdBy: json['createdBy'] ?? '',
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'babyId': babyId,
@@ -99,6 +138,26 @@ class MedicineEntry {
       'isCompleted': isCompleted,
       'notes': notes,
       'createdAt': Timestamp.fromDate(createdAt),
+      'createdBy': createdBy,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'babyId': babyId,
+      'medicineName': medicineName,
+      'type': type.toString().split('.').last,
+      'dosage': dosage,
+      'unit': unit.toString().split('.').last,
+      'givenAt': givenAt.toIso8601String(),
+      'prescribedBy': prescribedBy,
+      'reason': reason,
+      'nextDoseTime': nextDoseTime?.toIso8601String(),
+      'frequency': frequency?.toString().split('.').last,
+      'isCompleted': isCompleted,
+      'notes': notes,
+      'createdAt': createdAt.toIso8601String(),
       'createdBy': createdBy,
     };
   }

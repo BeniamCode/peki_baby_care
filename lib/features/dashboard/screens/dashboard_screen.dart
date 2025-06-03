@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-import '../../../data/models/baby_model.dart';
-import '../../../data/models/feeding_model.dart';
-import '../../../data/models/sleep_model.dart';
-import '../../../data/models/diaper_model.dart';
-import '../../../data/models/medicine_model.dart';
+import '../../baby_profile/providers/baby_provider.dart';
 import '../../feeding/providers/feeding_provider.dart';
 import '../../sleep/providers/sleep_provider.dart';
 import '../../diaper/providers/diaper_provider.dart';
 import '../../health/providers/medicine_provider.dart';
+import '../../../data/models/feeding_model.dart';
+import '../../../data/models/diaper_model.dart';
+import '../../diaper/models/diaper_entry.dart'; // For DiaperType enum
 import '../widgets/baby_info_card.dart';
 import '../widgets/activity_summary_card.dart';
 import '../widgets/quick_actions_grid.dart';
@@ -29,31 +27,33 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  late Stream<DocumentSnapshot<Map<String, dynamic>>> _babyStream;
-  final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
-
   @override
   void initState() {
     super.initState();
-    _babyStream = FirebaseFirestore.instance
-        .collection('babies')
-        .doc(widget.babyId)
-        .snapshots();
-    _loadData();
+    // Set selected baby in provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final babyProvider = context.read<BabyProvider>();
+      final baby = babyProvider.babies.firstWhere((b) => b.id == widget.babyId);
+      babyProvider.selectBaby(baby);
+    });
   }
 
-  Future<void> _loadData() async {
-    // Load data for all providers
-    await Future.wait([
-      context.read<FeedingProvider>().loadFeedings(widget.babyId),
-      context.read<SleepProvider>().loadSleepEntries(widget.babyId),
-      context.read<DiaperProvider>().loadDiapers(widget.babyId),
-      context.read<MedicineProvider>().loadMedicines(widget.babyId),
-    ]);
-  }
-
+  // Add refresh handler
   Future<void> _handleRefresh() async {
-    await _loadData();
+    // Refresh all providers
+    final babyProvider = context.read<BabyProvider>();
+    final feedingProvider = context.read<FeedingProvider>();
+    final sleepProvider = context.read<SleepProvider>();
+    final diaperProvider = context.read<DiaperProvider>();
+    final medicineProvider = context.read<MedicineProvider>();
+    
+    await Future.wait([
+      babyProvider.loadBabies(),
+      feedingProvider.fetchEntries(),
+      sleepProvider.fetchEntries(),
+      diaperProvider.fetchEntries(),
+      medicineProvider.fetchEntries(),
+    ]);
   }
 
   @override
@@ -72,32 +72,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: _babyStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Consumer<BabyProvider>(
+        builder: (context, babyProvider, _) {
+          final baby = babyProvider.selectedBaby;
+          
+          if (baby == null || baby.id != widget.babyId) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
-          }
-
-          if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(
-              child: Text('Baby not found'),
-            );
-          }
-
-          final baby = BabyModel.fromJson({
-            'id': snapshot.data!.id,
-            ...snapshot.data!.data()!,
-          });
-
           return RefreshIndicator(
-            key: _refreshKey,
             onRefresh: _handleRefresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -251,13 +234,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     for (final feeding in feedings) {
       switch (feeding.type) {
-        case 'breast':
+        case FeedingType.breast:
           breast++;
           break;
-        case 'bottle':
+        case FeedingType.bottle:
           bottle++;
           break;
-        case 'solid':
+        case FeedingType.solid:
           solid++;
           break;
       }
@@ -271,21 +254,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return parts.isEmpty ? 'No feedings today' : parts.join(', ');
   }
 
-  String _buildDiaperDetails(List<DiaperModel> diapers) {
+  String _buildDiaperDetails(List<DiaperEntry> diapers) {
     int wet = 0;
     int soiled = 0;
     int mixed = 0;
 
     for (final diaper in diapers) {
       switch (diaper.type) {
-        case 'wet':
+        case DiaperType.wet:
           wet++;
           break;
-        case 'soiled':
+        case DiaperType.dirty:
           soiled++;
           break;
-        case 'mixed':
+        case DiaperType.mixed:
           mixed++;
+          break;
+        case DiaperType.dry:
+          // Dry diapers don't count in summary
           break;
       }
     }

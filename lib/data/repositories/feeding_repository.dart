@@ -1,34 +1,45 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/feeding_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../features/feeding/models/feeding_entry.dart';
+import '../datasources/firebase_service.dart';
 
 class FeedingRepository {
-  static final FeedingRepository _instance = FeedingRepository._internal();
-  factory FeedingRepository() => _instance;
-  FeedingRepository._internal();
+  final FirebaseService _firebaseService = FirebaseService();
+  static const String _collection = 'feedings';
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _collection = 'feedings';
-
-  Future<void> addFeeding(FeedingModel feeding) async {
+  // Create a new feeding entry
+  Future<String> addFeeding(FeedingModel feeding) async {
     try {
-      await _firestore.collection(_collection).add(feeding.toJson());
+      final userId = _firebaseService.currentUser?.uid;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final feedingData = feeding.toMap();
+      feedingData['createdBy'] = userId;
+      
+      final docRef = await _firebaseService.addDocument(
+        _collection,
+        feedingData,
+      );
+      
+      return docRef.id;
     } catch (e) {
       throw Exception('Failed to add feeding: $e');
     }
   }
 
   Stream<List<FeedingModel>> getFeedingsStream(String babyId) {
-    return _firestore
-        .collection(_collection)
-        .where('babyId', isEqualTo: babyId)
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => FeedingModel.fromJson({
-                  ...doc.data(),
-                  'id': doc.id,
-                }))
-            .toList());
+    return _firebaseService.getCollectionStream(
+      _collection,
+      queryBuilder: (query) => query
+          .where('babyId', isEqualTo: babyId)
+          .orderBy('startTime', descending: true),
+    ).map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return FeedingModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
   }
 
   Future<List<FeedingModel>> getFeedingsByDateRange(
@@ -37,19 +48,16 @@ class FeedingRepository {
     DateTime endDate,
   ) async {
     try {
-      final snapshot = await _firestore
+      final snapshot = await _firebaseService.firestore
           .collection(_collection)
           .where('babyId', isEqualTo: babyId)
-          .where('timestamp', isGreaterThanOrEqualTo: startDate)
-          .where('timestamp', isLessThanOrEqualTo: endDate)
-          .orderBy('timestamp', descending: true)
+          .where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('startTime', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .orderBy('startTime', descending: true)
           .get();
 
       return snapshot.docs
-          .map((doc) => FeedingModel.fromJson({
-                ...doc.data(),
-                'id': doc.id,
-              }))
+          .map((doc) => FeedingModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
       throw Exception('Failed to get feedings: $e');
@@ -58,30 +66,27 @@ class FeedingRepository {
 
   Future<FeedingModel?> getLastFeeding(String babyId) async {
     try {
-      final snapshot = await _firestore
+      final snapshot = await _firebaseService.firestore
           .collection(_collection)
           .where('babyId', isEqualTo: babyId)
-          .orderBy('timestamp', descending: true)
+          .orderBy('startTime', descending: true)
           .limit(1)
           .get();
 
       if (snapshot.docs.isEmpty) return null;
 
-      return FeedingModel.fromJson({
-        ...snapshot.docs.first.data(),
-        'id': snapshot.docs.first.id,
-      });
+      return FeedingModel.fromMap(
+        snapshot.docs.first.data(),
+        snapshot.docs.first.id,
+      );
     } catch (e) {
       throw Exception('Failed to get last feeding: $e');
     }
   }
 
-  Future<void> updateFeeding(String feedingId, FeedingModel feeding) async {
+  Future<void> updateFeeding(String feedingId, Map<String, dynamic> updates) async {
     try {
-      await _firestore
-          .collection(_collection)
-          .doc(feedingId)
-          .update(feeding.toJson());
+      await _firebaseService.updateDocument(_collection, feedingId, updates);
     } catch (e) {
       throw Exception('Failed to update feeding: $e');
     }
@@ -89,7 +94,7 @@ class FeedingRepository {
 
   Future<void> deleteFeeding(String feedingId) async {
     try {
-      await _firestore.collection(_collection).doc(feedingId).delete();
+      await _firebaseService.deleteDocument(_collection, feedingId);
     } catch (e) {
       throw Exception('Failed to delete feeding: $e');
     }

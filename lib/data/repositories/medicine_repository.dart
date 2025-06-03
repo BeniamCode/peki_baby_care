@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/medicine_model.dart';
+import '../../features/health/models/medicine_entry.dart';
 
 class MedicineRepository {
   static final MedicineRepository _instance = MedicineRepository._internal();
@@ -9,7 +9,7 @@ class MedicineRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _collection = 'medicines';
 
-  Future<void> addMedicine(Medicine medicine) async {
+  Future<void> addMedicine(MedicineEntry medicine) async {
     try {
       await _firestore.collection(_collection).add(medicine.toJson());
     } catch (e) {
@@ -17,21 +17,21 @@ class MedicineRepository {
     }
   }
 
-  Stream<List<Medicine>> getMedicinesStream(String babyId) {
+  Stream<List<MedicineEntry>> getMedicinesStream(String babyId) {
     return _firestore
         .collection(_collection)
         .where('babyId', isEqualTo: babyId)
         .orderBy('administeredAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Medicine.fromJson({
+            .map((doc) => MedicineEntry.fromJson({
                   ...doc.data(),
                   'id': doc.id,
                 }))
             .toList());
   }
 
-  Future<List<Medicine>> getMedicinesByDateRange(
+  Future<List<MedicineEntry>> getMedicinesByDateRange(
     String babyId,
     DateTime startDate,
     DateTime endDate,
@@ -46,7 +46,7 @@ class MedicineRepository {
           .get();
 
       return snapshot.docs
-          .map((doc) => Medicine.fromJson({
+          .map((doc) => MedicineEntry.fromJson({
                 ...doc.data(),
                 'id': doc.id,
               }))
@@ -56,7 +56,7 @@ class MedicineRepository {
     }
   }
 
-  Future<Medicine?> getLastMedicine(String babyId, {String? medicineName}) async {
+  Future<MedicineEntry?> getLastMedicine(String babyId, {String? medicineName}) async {
     try {
       Query query = _firestore
           .collection(_collection)
@@ -73,7 +73,7 @@ class MedicineRepository {
 
       if (snapshot.docs.isEmpty) return null;
 
-      return Medicine.fromJson({
+      return MedicineEntry.fromJson({
         ...snapshot.docs.first.data() as Map<String, dynamic>,
         'id': snapshot.docs.first.id,
       });
@@ -82,7 +82,7 @@ class MedicineRepository {
     }
   }
 
-  Future<List<Medicine>> getUpcomingMedicines(String babyId) async {
+  Future<List<MedicineEntry>> getUpcomingMedicines(String babyId) async {
     try {
       final now = DateTime.now();
       final snapshot = await _firestore
@@ -94,7 +94,7 @@ class MedicineRepository {
           .get();
 
       return snapshot.docs
-          .map((doc) => Medicine.fromJson({
+          .map((doc) => MedicineEntry.fromJson({
                 ...doc.data(),
                 'id': doc.id,
               }))
@@ -104,7 +104,7 @@ class MedicineRepository {
     }
   }
 
-  Future<void> updateMedicine(String medicineId, Medicine medicine) async {
+  Future<void> updateMedicine(String medicineId, MedicineEntry medicine) async {
     try {
       await _firestore
           .collection(_collection)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:peki_baby_care/data/datasources/firebase_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -11,6 +12,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _firebaseService = FirebaseService();
   bool _isLoading = false;
   bool _emailSent = false;
 
@@ -24,14 +26,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
-      // TODO: Implement actual password reset logic
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() {
-        _isLoading = false;
-        _emailSent = true;
-      });
+      try {
+        await _firebaseService.sendPasswordResetEmail(_emailController.text.trim());
+        
+        setState(() {
+          _isLoading = false;
+          _emailSent = true;
+        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_getErrorMessage(e.toString())),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+          setState(() => _isLoading = false);
+        }
+      }
     }
+  }
+  
+  String _getErrorMessage(String error) {
+    if (error.contains('user-not-found')) {
+      return 'No account found with this email address';
+    } else if (error.contains('invalid-email')) {
+      return 'Invalid email address';
+    } else if (error.contains('network-request-failed')) {
+      return 'Network error. Please check your connection';
+    }
+    return 'Failed to send reset email. Please try again';
   }
 
   @override

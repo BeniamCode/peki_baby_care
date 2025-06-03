@@ -1,18 +1,19 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../../data/models/feeding_model.dart';
 import '../../../data/repositories/feeding_repository.dart';
 import '../models/feeding_summary.dart';
 
 class FeedingProvider extends ChangeNotifier {
-  final FeedingRepository _repository;
+  final FeedingRepository _repository = FeedingRepository();
   
   List<FeedingModel> _entries = [];
   bool _isLoading = false;
   String? _error;
   String? _currentBabyId;
+  StreamSubscription<List<FeedingModel>>? _feedingSubscription;
 
-  FeedingProvider({required FeedingRepository repository})
-      : _repository = repository;
+  FeedingProvider();
 
   // Getters
   List<FeedingModel> get entries => _entries;
@@ -42,6 +43,10 @@ class FeedingProvider extends ChangeNotifier {
     );
   }
 
+  // Method wrappers for dashboard compatibility
+  List<FeedingModel> getTodayFeedings() => todayEntries;
+  FeedingModel? getLastFeeding() => lastFeeding;
+
   // Set current baby
   void setCurrentBaby(String babyId) {
     if (_currentBabyId != babyId) {
@@ -51,22 +56,30 @@ class FeedingProvider extends ChangeNotifier {
   }
 
   // Fetch entries
-  Future<void> fetchEntries() async {
+  void fetchEntries() {
     if (_currentBabyId == null) return;
 
     _isLoading = true;
     _error = null;
     notifyListeners();
 
-    try {
-      _entries = await _repository.getFeedingsByBabyId(_currentBabyId!);
-      _entries.sort((a, b) => b.startTime.compareTo(a.startTime));
-    } catch (e) {
-      _error = 'Failed to load feeding entries. Please try again.';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    // Cancel previous subscription
+    _feedingSubscription?.cancel();
+
+    // Subscribe to feeding stream
+    _feedingSubscription = _repository.getFeedingsStream(_currentBabyId!).listen(
+      (feedings) {
+        _entries = feedings;
+        _isLoading = false;
+        _error = null;
+        notifyListeners();
+      },
+      onError: (error) {
+        _error = 'Failed to load feeding entries. Please try again.';
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   // Add entry
@@ -74,13 +87,11 @@ class FeedingProvider extends ChangeNotifier {
     if (_currentBabyId == null) return;
 
     _error = null;
-    notifyListeners();
 
     try {
       final newEntry = entry.copyWith(babyId: _currentBabyId);
-      final savedEntry = await _repository.addFeeding(newEntry);
-      _entries.insert(0, savedEntry);
-      notifyListeners();
+      await _repository.addFeeding(newEntry);
+      // Stream will automatically update the list
     } catch (e) {
       _error = 'Failed to add feeding entry. Please try again.';
       notifyListeners();
@@ -89,18 +100,12 @@ class FeedingProvider extends ChangeNotifier {
   }
 
   // Update entry
-  Future<void> updateEntry(FeedingModel entry) async {
+  Future<void> updateEntry(String feedingId, Map<String, dynamic> updates) async {
     _error = null;
-    notifyListeners();
 
     try {
-      final updatedEntry = await _repository.updateFeeding(entry);
-      final index = _entries.indexWhere((e) => e.id == entry.id);
-      if (index != -1) {
-        _entries[index] = updatedEntry;
-        _entries.sort((a, b) => b.startTime.compareTo(a.startTime));
-        notifyListeners();
-      }
+      await _repository.updateFeeding(feedingId, updates);
+      // Stream will automatically update the list
     } catch (e) {
       _error = 'Failed to update feeding entry. Please try again.';
       notifyListeners();
@@ -111,12 +116,10 @@ class FeedingProvider extends ChangeNotifier {
   // Delete entry
   Future<void> deleteEntry(String entryId) async {
     _error = null;
-    notifyListeners();
 
     try {
       await _repository.deleteFeeding(entryId);
-      _entries.removeWhere((e) => e.id == entryId);
-      notifyListeners();
+      // Stream will automatically update the list
     } catch (e) {
       _error = 'Failed to delete feeding entry. Please try again.';
       notifyListeners();
@@ -170,10 +173,17 @@ class FeedingProvider extends ChangeNotifier {
 
   // Reset provider
   void reset() {
+    _feedingSubscription?.cancel();
     _entries.clear();
     _isLoading = false;
     _error = null;
     _currentBabyId = null;
     notifyListeners();
+  }
+  
+  @override
+  void dispose() {
+    _feedingSubscription?.cancel();
+    super.dispose();
   }
 }

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/sleep_model.dart';
+import '../../features/sleep/models/sleep_entry.dart';
 
 class SleepRepository {
   static final SleepRepository _instance = SleepRepository._internal();
@@ -9,7 +9,7 @@ class SleepRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _collection = 'sleeps';
 
-  Future<void> addSleep(Sleep sleep) async {
+  Future<void> addSleep(SleepEntry sleep) async {
     try {
       await _firestore.collection(_collection).add(sleep.toJson());
     } catch (e) {
@@ -17,21 +17,21 @@ class SleepRepository {
     }
   }
 
-  Stream<List<Sleep>> getSleepsStream(String babyId) {
+  Stream<List<SleepEntry>> getSleepsStream(String babyId) {
     return _firestore
         .collection(_collection)
         .where('babyId', isEqualTo: babyId)
         .orderBy('startTime', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Sleep.fromJson({
+            .map((doc) => SleepEntry.fromJson({
                   ...doc.data(),
                   'id': doc.id,
                 }))
             .toList());
   }
 
-  Future<List<Sleep>> getSleepsByDateRange(
+  Future<List<SleepEntry>> getSleepsByDateRange(
     String babyId,
     DateTime startDate,
     DateTime endDate,
@@ -46,7 +46,7 @@ class SleepRepository {
           .get();
 
       return snapshot.docs
-          .map((doc) => Sleep.fromJson({
+          .map((doc) => SleepEntry.fromJson({
                 ...doc.data(),
                 'id': doc.id,
               }))
@@ -56,7 +56,7 @@ class SleepRepository {
     }
   }
 
-  Future<Sleep?> getLastSleep(String babyId) async {
+  Future<SleepEntry?> getLastSleep(String babyId) async {
     try {
       final snapshot = await _firestore
           .collection(_collection)
@@ -67,7 +67,7 @@ class SleepRepository {
 
       if (snapshot.docs.isEmpty) return null;
 
-      return Sleep.fromJson({
+      return SleepEntry.fromJson({
         ...snapshot.docs.first.data(),
         'id': snapshot.docs.first.id,
       });
@@ -114,7 +114,7 @@ class SleepRepository {
     }
   }
 
-  Future<void> updateSleep(String sleepId, Sleep sleep) async {
+  Future<void> updateSleep(String sleepId, SleepEntry sleep) async {
     try {
       await _firestore
           .collection(_collection)

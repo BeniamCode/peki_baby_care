@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:peki_baby_care/features/auth/providers/auth_provider.dart';
 import 'package:peki_baby_care/features/auth/presentation/screens/login_screen.dart';
 import 'package:peki_baby_care/features/auth/presentation/screens/register_screen.dart';
 import 'package:peki_baby_care/features/auth/presentation/screens/forgot_password_screen.dart';
@@ -7,6 +9,7 @@ import 'package:peki_baby_care/features/baby_profile/presentation/screens/baby_l
 import 'package:peki_baby_care/features/baby_profile/presentation/screens/add_baby_screen.dart';
 import 'package:peki_baby_care/features/baby_profile/presentation/screens/baby_detail_screen.dart';
 import 'package:peki_baby_care/features/dashboard/screens/dashboard_screen.dart';
+import 'package:peki_baby_care/features/dashboard/screens/dashboard_wrapper_screen.dart';
 import 'package:peki_baby_care/features/feeding/screens/feeding_screen.dart';
 import 'package:peki_baby_care/features/feeding/screens/add_feeding_screen.dart';
 import 'package:peki_baby_care/features/sleep/screens/sleep_screen.dart';
@@ -53,7 +56,10 @@ class AppRouter {
           GoRoute(
             path: '/home',
             name: 'home',
-            builder: (context, state) => const BabyListScreen(),
+            builder: (context, state) {
+              // Show dashboard wrapper if babies exist, otherwise baby list
+              return const DashboardWrapperScreen();
+            },
             routes: [
               // Baby Profile Routes
               GoRoute(
@@ -173,17 +179,23 @@ class AppRouter {
     
     // Redirect logic
     redirect: (context, state) {
-      // TODO: Add authentication check
-      // final isAuthenticated = authProvider.isAuthenticated;
-      // final isAuthRoute = state.uri.toString().startsWith('/auth');
+      final authProvider = context.read<AuthProvider>();
+      final isAuthenticated = authProvider.isAuthenticated;
+      final isAuthRoute = state.uri.toString().startsWith('/auth');
+      final isLoading = authProvider.isLoading;
       
-      // if (!isAuthenticated && !isAuthRoute) {
-      //   return '/auth/login';
-      // }
+      // Don't redirect while loading
+      if (isLoading) return null;
       
-      // if (isAuthenticated && isAuthRoute) {
-      //   return '/home';
-      // }
+      // Redirect to login if not authenticated and not on auth route
+      if (!isAuthenticated && !isAuthRoute) {
+        return '/auth/login';
+      }
+      
+      // Redirect to home if authenticated and on auth route
+      if (isAuthenticated && isAuthRoute) {
+        return '/home';
+      }
       
       return null;
     },

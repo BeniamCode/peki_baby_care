@@ -53,6 +53,10 @@ class DiaperProvider extends ChangeNotifier {
     return hoursSinceLastChange >= 3;
   }
 
+  // Method wrappers for dashboard compatibility
+  List<DiaperEntry> getTodayDiapers() => todayEntries;
+  DiaperEntry? getLastDiaper() => lastDiaperChange;
+
   // Set current baby
   void setCurrentBaby(String babyId) {
     if (_currentBabyId != babyId) {
@@ -173,7 +177,7 @@ class DiaperProvider extends ChangeNotifier {
         wetCount++;
       } else if (entry.type == DiaperType.dirty) {
         dirtyCount++;
-      } else if (entry.type == DiaperType.both) {
+      } else if (entry.type == DiaperType.mixed) {
         bothCount++;
       }
     }

@@ -52,6 +52,16 @@ class SleepProvider extends ChangeNotifier {
     );
   }
 
+  // Method wrappers for dashboard compatibility
+  List<SleepEntry> getTodaySleepEntries() => todayEntries;
+  SleepEntry? getLastSleepEntry() => lastCompletedSleep;
+  Duration getTotalSleepDuration() {
+    final today = DateTime.now();
+    final todaySleeps = todayEntries.where((e) => e.endTime != null);
+    return todaySleeps.fold(Duration.zero, (total, sleep) => 
+      total + sleep.endTime!.difference(sleep.startTime));
+  }
+
   // Set current baby
   void setCurrentBaby(String babyId) {
     if (_currentBabyId != babyId) {

@@ -31,6 +31,9 @@ class BabyModel {
 
   int get ageInDays => DateTime.now().difference(dateOfBirth).inDays;
   
+  // Compatibility getter for birthDate
+  DateTime get birthDate => dateOfBirth;
+  
   int get ageInMonths {
     final now = DateTime.now();
     int months = (now.year - dateOfBirth.year) * 12 + now.month - dateOfBirth.month;
@@ -70,6 +73,36 @@ class BabyModel {
       parentIds: List<String>.from(map['parentIds'] ?? []),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
+    );
+  }
+
+  // Create from JSON for repository compatibility
+  factory BabyModel.fromJson(Map<String, dynamic> json) {
+    return BabyModel(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      dateOfBirth: json['dateOfBirth'] != null 
+          ? DateTime.parse(json['dateOfBirth']) 
+          : DateTime.now(),
+      gender: json['gender'] != null
+          ? Gender.values.firstWhere(
+              (g) => g.toString().split('.').last == json['gender'],
+              orElse: () => Gender.other,
+            )
+          : Gender.other,
+      birthWeight: json['birthWeight']?.toDouble(),
+      birthHeight: json['birthHeight']?.toDouble(),
+      photoUrl: json['photoUrl'],
+      bloodType: json['bloodType'],
+      parentIds: json['parentIds'] != null 
+          ? List<String>.from(json['parentIds']) 
+          : [],
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt']) 
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt']) 
+          : DateTime.now(),
     );
   }
 

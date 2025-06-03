@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/diaper_model.dart';
+import '../../features/diaper/models/diaper_entry.dart';
 
 class DiaperRepository {
   static final DiaperRepository _instance = DiaperRepository._internal();
@@ -9,7 +9,7 @@ class DiaperRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _collection = 'diapers';
 
-  Future<void> addDiaper(Diaper diaper) async {
+  Future<void> addDiaper(DiaperEntry diaper) async {
     try {
       await _firestore.collection(_collection).add(diaper.toJson());
     } catch (e) {
@@ -17,21 +17,21 @@ class DiaperRepository {
     }
   }
 
-  Stream<List<Diaper>> getDiapersStream(String babyId) {
+  Stream<List<DiaperEntry>> getDiapersStream(String babyId) {
     return _firestore
         .collection(_collection)
         .where('babyId', isEqualTo: babyId)
-        .orderBy('timestamp', descending: true)
+        .orderBy('changeTime', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Diaper.fromJson({
+            .map((doc) => DiaperEntry.fromJson({
                   ...doc.data(),
                   'id': doc.id,
                 }))
             .toList());
   }
 
-  Future<List<Diaper>> getDiapersByDateRange(
+  Future<List<DiaperEntry>> getDiapersByDateRange(
     String babyId,
     DateTime startDate,
     DateTime endDate,
@@ -40,13 +40,13 @@ class DiaperRepository {
       final snapshot = await _firestore
           .collection(_collection)
           .where('babyId', isEqualTo: babyId)
-          .where('timestamp', isGreaterThanOrEqualTo: startDate)
-          .where('timestamp', isLessThanOrEqualTo: endDate)
-          .orderBy('timestamp', descending: true)
+          .where('changeTime', isGreaterThanOrEqualTo: startDate)
+          .where('changeTime', isLessThanOrEqualTo: endDate)
+          .orderBy('changeTime', descending: true)
           .get();
 
       return snapshot.docs
-          .map((doc) => Diaper.fromJson({
+          .map((doc) => DiaperEntry.fromJson({
                 ...doc.data(),
                 'id': doc.id,
               }))
@@ -56,18 +56,18 @@ class DiaperRepository {
     }
   }
 
-  Future<Diaper?> getLastDiaper(String babyId) async {
+  Future<DiaperEntry?> getLastDiaper(String babyId) async {
     try {
       final snapshot = await _firestore
           .collection(_collection)
           .where('babyId', isEqualTo: babyId)
-          .orderBy('timestamp', descending: true)
+          .orderBy('changeTime', descending: true)
           .limit(1)
           .get();
 
       if (snapshot.docs.isEmpty) return null;
 
-      return Diaper.fromJson({
+      return DiaperEntry.fromJson({
         ...snapshot.docs.first.data(),
         'id': snapshot.docs.first.id,
       });
@@ -101,6 +101,11 @@ class DiaperRepository {
           case DiaperType.mixed:
             mixedCount++;
             break;
+          case DiaperType.dry:
+            // Dry diapers don't count towards wet/dirty counts
+            break;
+            mixedCount++;
+            break;
         }
       }
 
@@ -115,7 +120,7 @@ class DiaperRepository {
     }
   }
 
-  Future<void> updateDiaper(String diaperId, Diaper diaper) async {
+  Future<void> updateDiaper(String diaperId, DiaperEntry diaper) async {
     try {
       await _firestore
           .collection(_collection)

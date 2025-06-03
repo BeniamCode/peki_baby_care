@@ -33,6 +33,10 @@ class MedicineProvider extends ChangeNotifier {
     }).toList();
   }
 
+  // Method wrappers for dashboard compatibility
+  List<MedicineEntry> getTodayMedicines() => todayEntries;
+  List<MedicineEntry> getUpcomingDoses() => _entries.where((e) => e.givenAt.isAfter(DateTime.now())).toList();
+
   // Get active medications (not completed)
   List<MedicineEntry> get activeMedications {
     return _entries.where((entry) => !entry.isCompleted).toList();

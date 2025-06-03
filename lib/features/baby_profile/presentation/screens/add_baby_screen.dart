@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:peki_baby_care/data/models/baby_model.dart';
+import 'package:peki_baby_care/features/baby_profile/providers/baby_provider.dart';
+import 'package:peki_baby_care/features/auth/providers/auth_provider.dart';
 
 class AddBabyScreen extends StatefulWidget {
   const AddBabyScreen({super.key});
@@ -47,14 +50,48 @@ class _AddBabyScreenState extends State<AddBabyScreen> {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
       setState(() => _isLoading = true);
       
-      // TODO: Implement actual save logic
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      if (mounted) {
-        context.pop();
+      try {
+        final babyProvider = context.read<BabyProvider>();
+        await babyProvider.createBaby(
+          name: _nameController.text.trim(),
+          dateOfBirth: _selectedDate!,
+          gender: _selectedGender,
+          birthWeight: _birthWeightController.text.isNotEmpty
+              ? double.tryParse(_birthWeightController.text)
+              : null,
+          birthHeight: _birthHeightController.text.isNotEmpty
+              ? double.tryParse(_birthHeightController.text)
+              : null,
+        );
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Baby profile created successfully!'),
+            ),
+          );
+          context.pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error creating baby profile: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
+    } else if (_selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select birth date'),
+        ),
+      );
     }
   }
 

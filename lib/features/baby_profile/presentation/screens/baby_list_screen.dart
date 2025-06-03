@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:peki_baby_care/data/models/baby_model.dart';
-import 'package:peki_baby_care/features/dashboard/providers/selected_baby_provider.dart';
-import 'package:peki_baby_care/core/extensions/datetime_extensions.dart';
+import 'package:peki_baby_care/features/baby_profile/providers/baby_provider.dart';
+import 'package:peki_baby_care/features/auth/providers/auth_provider.dart';
 
 class BabyListScreen extends StatelessWidget {
   const BabyListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final authProvider = context.watch<AuthProvider>();
+    final babyProvider = context.watch<BabyProvider>();
     
-    if (userId == null) {
+    if (!authProvider.isAuthenticated) {
       return const Scaffold(
         body: Center(
           child: Text('Please login to continue'),
@@ -32,37 +31,36 @@ class BabyListScreen extends StatelessWidget {
               // TODO: Navigate to settings
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await authProvider.signOut();
+              if (context.mounted) {
+                context.go('/auth/login');
+              }
+            },
+          ),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('babies')
-            .where('userId', isEqualTo: userId)
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
-          }
-
-          final babies = snapshot.data?.docs.map((doc) {
-            return BabyModel.fromJson({
-              'id': doc.id,
-              ...doc.data(),
-            });
-          }).toList() ?? [];
-
-          return babies.isEmpty
-              ? _buildEmptyState(context)
-              : _buildBabyList(context, babies);
-        },
-      ),
+      body: babyProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : babyProvider.error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: ${babyProvider.error}'),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () => babyProvider.loadBabies(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : babyProvider.babies.isEmpty
+                  ? _buildEmptyState(context)
+                  : _buildBabyList(context, babyProvider.babies),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/home/add-baby'),
         icon: const Icon(Icons.add),
@@ -119,7 +117,7 @@ class BabyListScreen extends StatelessWidget {
           child: InkWell(
             onTap: () {
               // Set selected baby in provider
-              context.read<SelectedBabyProvider>().setSelectedBaby(baby);
+              context.read<BabyProvider>().selectBaby(baby);
               // Navigate to dashboard
               context.push('/home/dashboard/${baby.id}');
             },
@@ -156,7 +154,7 @@ class BabyListScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          baby.birthDate.calculateAge(),
+                          baby.ageString,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),

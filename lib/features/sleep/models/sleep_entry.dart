@@ -52,6 +52,9 @@ class SleepEntry {
   // Get sleep type display string
   String get sleepTypeDisplay => sleepType == SleepType.night ? 'Night Sleep' : 'Nap';
 
+  // Compatibility getter for 'type' field
+  SleepType get type => sleepType;
+
   // Create from Firestore document
   factory SleepEntry.fromMap(Map<String, dynamic> map, String id) {
     return SleepEntry(
@@ -80,6 +83,37 @@ class SleepEntry {
       'notes': notes,
       'createdAt': Timestamp.fromDate(createdAt),
     };
+  }
+
+  // Convert to JSON for repository compatibility
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'babyId': babyId,
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime?.toIso8601String(),
+      'sleepType': sleepType.toString().split('.').last,
+      'notes': notes,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  // Create from JSON for repository compatibility
+  factory SleepEntry.fromJson(Map<String, dynamic> json) {
+    return SleepEntry(
+      id: json['id'] ?? '',
+      babyId: json['babyId'] ?? '',
+      startTime: DateTime.parse(json['startTime']),
+      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
+      sleepType: json['sleepType'] != null
+          ? SleepType.values.firstWhere(
+              (type) => type.toString().split('.').last == json['sleepType'],
+              orElse: () => SleepType.nap,
+            )
+          : SleepType.nap,
+      notes: json['notes'],
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+    );
   }
 
   // Copy with method

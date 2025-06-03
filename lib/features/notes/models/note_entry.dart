@@ -62,6 +62,46 @@ class NoteEntry {
     };
   }
 
+  // Convert to JSON for repository compatibility
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'babyId': babyId,
+      'title': title,
+      'content': content,
+      'category': category.index,
+      'tags': tags,
+      'isImportant': isImportant,
+      'attachments': attachments,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  // Create from JSON for repository compatibility
+  factory NoteEntry.fromJson(Map<String, dynamic> json) {
+    return NoteEntry(
+      id: json['id'] ?? '',
+      babyId: json['babyId'] ?? '',
+      title: json['title'] ?? '',
+      content: json['content'] ?? '',
+      category: json['category'] != null 
+          ? NoteCategory.values[json['category']] 
+          : NoteCategory.general,
+      tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
+      isImportant: json['isImportant'] ?? false,
+      attachments: json['attachments'] != null
+          ? List<String>.from(json['attachments'])
+          : null,
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt']) 
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt']) 
+          : DateTime.now(),
+    );
+  }
+
   NoteEntry copyWith({
     String? id,
     String? babyId,
