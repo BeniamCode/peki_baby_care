@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../../data/models/medicine_model.dart';
+import '../models/medicine_entry.dart';
 import '../../../core/extensions/datetime_extensions.dart';
 
 class MedicineListTile extends StatelessWidget {
-  final MedicineModel medicine;
+  final MedicineEntry entry;
   final VoidCallback? onToggleComplete;
   final VoidCallback? onTap;
   final bool isHistoryItem;
 
   const MedicineListTile({
     super.key,
-    required this.medicine,
+    required this.entry,
     this.onToggleComplete,
     this.onTap,
     this.isHistoryItem = false,
@@ -19,14 +19,14 @@ class MedicineListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isCompleted = medicine.isCompleted;
+    final isCompleted = entry.isCompleted;
     final isPastDue = !isCompleted && 
-        medicine.timeAdministered.isBefore(DateTime.now());
+        entry.givenAt.isBefore(DateTime.now());
 
     return Card(
       elevation: isCompleted ? 0 : 2,
       color: isCompleted 
-          ? theme.colorScheme.surfaceVariant.withOpacity(0.5)
+          ? theme.colorScheme.surfaceVariant.withValues(alpha: 0.5)
           : isPastDue 
               ? theme.colorScheme.errorContainer
               : theme.cardColor,
@@ -59,8 +59,8 @@ class MedicineListTile extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: isCompleted
-                        ? theme.colorScheme.primary.withOpacity(0.2)
-                        : theme.colorScheme.error.withOpacity(0.2),
+                        ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                        : theme.colorScheme.error.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -82,14 +82,14 @@ class MedicineListTile extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            medicine.name,
+                            entry.medicineName,
                             style: theme.textTheme.titleMedium?.copyWith(
                               decoration: isCompleted 
                                   ? TextDecoration.lineThrough 
                                   : null,
                               fontWeight: FontWeight.w600,
                               color: isCompleted
-                                  ? theme.colorScheme.onSurface.withOpacity(0.6)
+                                  ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
                                   : isPastDue
                                       ? theme.colorScheme.onErrorContainer
                                       : null,
@@ -123,45 +123,45 @@ class MedicineListTile extends StatelessWidget {
                         Icon(
                           Icons.local_pharmacy,
                           size: 16,
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          medicine.dosage,
+                          '${entry.dosage} ${entry.unit.toString().split('.').last}',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         const SizedBox(width: 16),
                         Icon(
                           Icons.access_time,
                           size: 16,
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          medicine.timeAdministered.formatTime(),
+                          entry.givenAt.formatTime(),
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
                     ),
-                    if (medicine.notes != null && medicine.notes!.isNotEmpty) ...[
+                    if (entry.notes != null && entry.notes!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Icon(
                             Icons.note,
                             size: 16,
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              medicine.notes!,
+                              entry.notes!,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -177,7 +177,7 @@ class MedicineListTile extends StatelessWidget {
               // Arrow icon for details
               Icon(
                 Icons.chevron_right,
-                color: theme.colorScheme.onSurface.withOpacity(0.3),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
               ),
             ],
           ),

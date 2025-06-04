@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../data/models/diaper_model.dart';
-import '../../../core/utils/date_time_extensions.dart';
+import '../models/diaper_entry.dart';
+import '../../../core/extensions/datetime_extensions.dart';
 
 class DiaperListTile extends StatelessWidget {
-  final Diaper diaper;
+  final DiaperEntry entry;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
 
   const DiaperListTile({
     super.key,
-    required this.diaper,
+    required this.entry,
     this.onTap,
     this.onDelete,
   });
@@ -30,12 +30,12 @@ class DiaperListTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _getTypeColor(diaper.type).withOpacity(0.2),
+                  color: _getTypeColor(entry.type).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  _getTypeIcon(diaper.type),
-                  color: _getTypeColor(diaper.type),
+                  _getTypeIcon(entry.type),
+                  color: _getTypeColor(entry.type),
                   size: 24,
                 ),
               ),
@@ -47,12 +47,12 @@ class DiaperListTile extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '${diaper.type.name.toUpperCase()} Diaper',
+                          '${entry.type.name.toUpperCase()} Diaper',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (diaper.hasRash) ...[
+                        if (entry.hasRash) ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -77,15 +77,15 @@ class DiaperListTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      diaper.timestamp.formatTime(),
+                      entry.changeTime.formatTime(),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    if (diaper.notes != null && diaper.notes!.isNotEmpty) ...[
+                    if (entry.notes != null && entry.notes!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
-                        diaper.notes!,
+                        entry.notes!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -135,6 +135,8 @@ class DiaperListTile extends StatelessWidget {
         return Icons.cloud;
       case DiaperType.mixed:
         return Icons.cyclone;
+      case DiaperType.dry:
+        return Icons.check_circle;
     }
   }
 
@@ -146,6 +148,8 @@ class DiaperListTile extends StatelessWidget {
         return Colors.brown;
       case DiaperType.mixed:
         return Colors.orange;
+      case DiaperType.dry:
+        return Colors.grey;
     }
   }
 }

@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:peki_baby_care/data/models/baby_model.dart';
 import 'package:peki_baby_care/features/baby_profile/providers/baby_provider.dart';
-import 'package:peki_baby_care/features/auth/providers/auth_provider.dart';
 
 class AddBabyScreen extends StatefulWidget {
   const AddBabyScreen({super.key});

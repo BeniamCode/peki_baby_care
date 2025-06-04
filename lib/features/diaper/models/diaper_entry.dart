@@ -13,6 +13,8 @@ class DiaperEntry {
   final DiaperType type;
   final DateTime changeTime;
   final bool hasRash;
+  final String? consistency;
+  final String? color;
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -23,13 +25,16 @@ class DiaperEntry {
     required this.type,
     required this.changeTime,
     this.hasRash = false,
+    this.consistency,
+    this.color,
     this.notes,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  // Convenience getter for compatibility
+  // Convenience getters for compatibility
   DateTime get time => changeTime;
+  DateTime get timestamp => changeTime;
 
   // Factory constructor for creating a new entry
   factory DiaperEntry.create({
@@ -37,6 +42,8 @@ class DiaperEntry {
     required DiaperType type,
     required DateTime changeTime,
     bool hasRash = false,
+    String? consistency,
+    String? color,
     String? notes,
   }) {
     final now = DateTime.now();
@@ -46,6 +53,8 @@ class DiaperEntry {
       type: type,
       changeTime: changeTime,
       hasRash: hasRash,
+      consistency: consistency,
+      color: color,
       notes: notes,
       createdAt: now,
       updatedAt: now,
@@ -63,6 +72,8 @@ class DiaperEntry {
       ),
       changeTime: (data['changeTime'] as Timestamp).toDate(),
       hasRash: data['hasRash'] ?? false,
+      consistency: data['consistency'],
+      color: data['color'],
       notes: data['notes'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
@@ -80,6 +91,8 @@ class DiaperEntry {
       ),
       changeTime: DateTime.parse(json['changeTime']),
       hasRash: json['hasRash'] ?? false,
+      consistency: json['consistency'],
+      color: json['color'],
       notes: json['notes'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
@@ -99,6 +112,8 @@ class DiaperEntry {
           ? map['changeTime'] 
           : DateTime.parse(map['changeTime']),
       hasRash: map['hasRash'] ?? false,
+      consistency: map['consistency'],
+      color: map['color'],
       notes: map['notes'],
       createdAt: map['createdAt'] is DateTime 
           ? map['createdAt'] 
@@ -116,6 +131,8 @@ class DiaperEntry {
       'type': type.toString().split('.').last,
       'changeTime': Timestamp.fromDate(changeTime),
       'hasRash': hasRash,
+      'consistency': consistency,
+      'color': color,
       'notes': notes,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -130,6 +147,8 @@ class DiaperEntry {
       'type': type.toString().split('.').last,
       'changeTime': changeTime.toIso8601String(),
       'hasRash': hasRash,
+      'consistency': consistency,
+      'color': color,
       'notes': notes,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -144,6 +163,8 @@ class DiaperEntry {
       'type': type.toString().split('.').last,
       'changeTime': changeTime,
       'hasRash': hasRash,
+      'consistency': consistency,
+      'color': color,
       'notes': notes,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -157,6 +178,8 @@ class DiaperEntry {
     DiaperType? type,
     DateTime? changeTime,
     bool? hasRash,
+    String? consistency,
+    String? color,
     String? notes,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -167,6 +190,8 @@ class DiaperEntry {
       type: type ?? this.type,
       changeTime: changeTime ?? this.changeTime,
       hasRash: hasRash ?? this.hasRash,
+      consistency: consistency ?? this.consistency,
+      color: color ?? this.color,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -183,6 +208,8 @@ class DiaperEntry {
         other.type == type &&
         other.changeTime == changeTime &&
         other.hasRash == hasRash &&
+        other.consistency == consistency &&
+        other.color == color &&
         other.notes == notes &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
@@ -195,6 +222,8 @@ class DiaperEntry {
         type.hashCode ^
         changeTime.hashCode ^
         hasRash.hashCode ^
+        consistency.hashCode ^
+        color.hashCode ^
         notes.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode;
@@ -202,6 +231,6 @@ class DiaperEntry {
 
   @override
   String toString() {
-    return 'DiaperEntry(id: $id, babyId: $babyId, type: $type, changeTime: $changeTime, hasRash: $hasRash, notes: $notes, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'DiaperEntry(id: $id, babyId: $babyId, type: $type, changeTime: $changeTime, hasRash: $hasRash, consistency: $consistency, color: $color, notes: $notes, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 }

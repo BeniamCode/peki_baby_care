@@ -2,11 +2,11 @@
   "indexes": [
     {
       "collectionGroup": "babies",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
-          "fieldPath": "parentIds",
-          "arrayConfig": "CONTAINS"
+          "fieldPath": "createdBy",
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
@@ -16,7 +16,7 @@
     },
     {
       "collectionGroup": "feedings",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "babyId",
@@ -29,11 +29,15 @@
       ]
     },
     {
-      "collectionGroup": "sleeps",
-      "queryScope": "COLLECTION",
+      "collectionGroup": "feedings",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "type",
           "order": "ASCENDING"
         },
         {
@@ -44,49 +48,181 @@
     },
     {
       "collectionGroup": "diapers",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "babyId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "timestamp",
+          "fieldPath": "changeTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "diapers",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "type",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "changeTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "diapers",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "hasRash",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "changeTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "sleep",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "sleep",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sleepType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "sleep",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "endTime",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "medicines",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "givenAt",
           "order": "DESCENDING"
         }
       ]
     },
     {
       "collectionGroup": "medicines",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "babyId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "administeredAt",
-          "order": "DESCENDING"
+          "fieldPath": "isCompleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "nextDoseTime",
+          "order": "ASCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "notes",
-      "queryScope": "COLLECTION",
+      "collectionGroup": "medicines",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "babyId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "timestamp",
+          "fieldPath": "medicineName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "givenAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "growth",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "recordedAt",
           "order": "DESCENDING"
         }
       ]
     },
     {
       "collectionGroup": "notes",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "notes",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "babyId",
@@ -97,25 +233,74 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "timestamp",
+          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "growth",
-      "queryScope": "COLLECTION",
+      "collectionGroup": "notes",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "babyId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "date",
+          "fieldPath": "isImportant",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "notes",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "babyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isImportant",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "notes",
+      "fieldPath": "tags",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    }
+  ]
 }

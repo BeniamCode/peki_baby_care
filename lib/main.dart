@@ -8,7 +8,6 @@ import 'config/routes/app_router.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/baby_profile/providers/baby_provider.dart';
 import 'features/feeding/providers/feeding_provider.dart';
-import 'features/feeding/repositories/feeding_repository.dart';
 import 'features/sleep/providers/sleep_provider.dart';
 import 'features/sleep/repositories/sleep_repository.dart';
 import 'features/diaper/providers/diaper_provider.dart';
@@ -58,13 +57,13 @@ void main() async {
           },
         ),
         ChangeNotifierProxyProvider<BabyProvider, FeedingProvider>(
-          create: (_) => FeedingProvider(repository: FeedingRepository()),
+          create: (_) => FeedingProvider(),
           update: (_, babyProvider, feedingProvider) {
             // Update feeding provider when selected baby changes
             if (babyProvider.selectedBaby != null && feedingProvider != null) {
               feedingProvider.setCurrentBaby(babyProvider.selectedBaby!.id);
             }
-            return feedingProvider ?? FeedingProvider(repository: FeedingRepository());
+            return feedingProvider ?? FeedingProvider();
           },
         ),
         ChangeNotifierProxyProvider<BabyProvider, SleepProvider>(
@@ -98,7 +97,7 @@ void main() async {
           create: (_) => NoteProvider(repository: NoteRepository()),
           update: (_, babyProvider, noteProvider) {
             if (babyProvider.selectedBaby != null && noteProvider != null) {
-              noteProvider.setBabyId(babyProvider.selectedBaby!.id);
+              noteProvider.setCurrentBaby(babyProvider.selectedBaby!.id);
             }
             return noteProvider ?? NoteProvider(repository: NoteRepository());
           },
@@ -166,9 +165,7 @@ class _PegkiAppState extends State<PegkiApp> with WidgetsBindingObserver {
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(
-              MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.2),
-            ),
+            textScaler: MediaQuery.textScalerOf(context),
           ),
           child: child!,
         );

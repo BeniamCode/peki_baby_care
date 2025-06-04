@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../../data/models/diaper_model.dart';
-import '../../../core/utils/date_time_extensions.dart';
+import '../models/diaper_entry.dart';
+import '../models/diaper_summary.dart';
+import '../../../core/extensions/datetime_extensions.dart';
 
 class DiaperSummaryCard extends StatelessWidget {
-  final Map<String, int> summary;
-  final Diaper? lastDiaper;
+  final DiaperSummary summary;
+  final DiaperEntry? lastEntry;
 
   const DiaperSummaryCard({
     super.key,
     required this.summary,
-    this.lastDiaper,
+    this.lastEntry,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final timeSinceLastChange = lastDiaper != null
-        ? DateTime.now().difference(lastDiaper!.timestamp)
+    final timeSinceLastChange = lastEntry != null
+        ? DateTime.now().difference(lastEntry!.changeTime)
         : null;
 
     return Card(
@@ -41,7 +42,7 @@ class DiaperSummaryCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _getTimeColor(timeSinceLastChange).withOpacity(0.2),
+                      color: _getTimeColor(timeSinceLastChange).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -63,34 +64,34 @@ class DiaperSummaryCard extends StatelessWidget {
                 _buildStatColumn(
                   context,
                   'Wet',
-                  summary['wet']?.toString() ?? '0',
+                  summary.wetChanges.toString(),
                   Icons.water_drop,
                   Colors.blue,
                 ),
                 _buildStatColumn(
                   context,
                   'Dirty',
-                  summary['dirty']?.toString() ?? '0',
+                  summary.dirtyChanges.toString(),
                   Icons.cloud,
                   Colors.brown,
                 ),
                 _buildStatColumn(
                   context,
                   'Mixed',
-                  summary['mixed']?.toString() ?? '0',
+                  summary.mixedChanges.toString(),
                   Icons.cyclone,
                   Colors.orange,
                 ),
                 _buildStatColumn(
                   context,
                   'Total',
-                  summary['total']?.toString() ?? '0',
+                  summary.totalChanges.toString(),
                   Icons.baby_changing_station,
                   colorScheme.primary,
                 ),
               ],
             ),
-            if (lastDiaper != null) ...[
+            if (lastEntry != null) ...[
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 8),
@@ -103,12 +104,12 @@ class DiaperSummaryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Last change: ${lastDiaper!.timestamp.formatTime()}',
+                    'Last change: ${lastEntry!.changeTime.formatTime()}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  if (lastDiaper!.hasRash) ...[
+                  if (lastEntry!.hasRash) ...[
                     const SizedBox(width: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(

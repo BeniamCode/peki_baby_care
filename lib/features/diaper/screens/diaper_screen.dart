@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../data/models/diaper_model.dart';
+import '../models/diaper_entry.dart';
 import '../providers/diaper_provider.dart';
 import '../widgets/diaper_list_tile.dart';
 import '../widgets/diaper_summary_card.dart';
 import '../widgets/quick_log_buttons.dart';
 import 'add_diaper_screen.dart';
-import '../../../core/utils/date_time_extensions.dart';
+import '../../../core/extensions/datetime_extensions.dart';
 
 class DiaperScreen extends StatefulWidget {
   const DiaperScreen({super.key});
@@ -20,20 +20,21 @@ class _DiaperScreenState extends State<DiaperScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DiaperProvider>().loadDiapers();
+      context.read<DiaperProvider>().fetchEntries();
     });
   }
 
   Future<void> _quickLog(DiaperType type) async {
     final provider = context.read<DiaperProvider>();
-    final diaper = Diaper(
+    final diaper = DiaperEntry.create(
       babyId: provider.currentBabyId ?? '',
       type: type,
-      timestamp: DateTime.now(),
+      changeTime: DateTime.now(),
+      hasRash: false,
     );
 
     try {
-      await provider.addDiaper(diaper);
+      await provider.addEntry(diaper);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -63,12 +64,12 @@ class _DiaperScreenState extends State<DiaperScreen> {
       ),
       body: Consumer<DiaperProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading && provider.diapers.isEmpty) {
+          if (provider.isLoading && provider.entries.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
           return RefreshIndicator(
-            onRefresh: () => provider.loadDiapers(),
+            onRefresh: () => provider.fetchEntries(),
             child: CustomScrollView(
               slivers: [
                 // Quick log buttons
@@ -84,19 +85,19 @@ class _DiaperScreenState extends State<DiaperScreen> {
                 ),
 
                 // Summary card
-                if (provider.diapers.isNotEmpty)
+                if (provider.entries.isNotEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: DiaperSummaryCard(
-                        summary: provider.todaySummary,
-                        lastDiaper: provider.lastDiaper,
+                        summary: provider.getSummary(date: DateTime.now()),
+                        lastEntry: provider.lastDiaperChange,
                       ),
                     ),
                   ),
 
                 // Diaper history
-                if (provider.diapers.isEmpty)
+                if (provider.entries.isEmpty)
                   SliverFillRemaining(
                     child: Center(
                       child: Column(
@@ -132,8 +133,8 @@ class _DiaperScreenState extends State<DiaperScreen> {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           if (index == 0 || 
-                              !provider.diapers[index].timestamp.isSameDay(
-                                provider.diapers[index - 1].timestamp)) {
+                              !provider.entries[index].changeTime.isSameDay(
+                                provider.entries[index - 1].changeTime)) {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -141,7 +142,7 @@ class _DiaperScreenState extends State<DiaperScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                                   child: Text(
-                                    provider.diapers[index].timestamp.formatDate(),
+                                    provider.entries[index].changeTime.formatDate(),
                                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                       color: Theme.of(context).colorScheme.primary,
                                       fontWeight: FontWeight.bold,
@@ -149,20 +150,20 @@ class _DiaperScreenState extends State<DiaperScreen> {
                                   ),
                                 ),
                                 DiaperListTile(
-                                  diaper: provider.diapers[index],
-                                  onTap: () => _showDiaperDetails(provider.diapers[index]),
-                                  onDelete: () => _deleteDiaper(provider.diapers[index]),
+                                  entry: provider.entries[index],
+                                  onTap: () => _showDiaperDetails(provider.entries[index]),
+                                  onDelete: () => _deleteDiaper(provider.entries[index]),
                                 ),
                               ],
                             );
                           }
                           return DiaperListTile(
-                            diaper: provider.diapers[index],
-                            onTap: () => _showDiaperDetails(provider.diapers[index]),
-                            onDelete: () => _deleteDiaper(provider.diapers[index]),
+                            entry: provider.entries[index],
+                            onTap: () => _showDiaperDetails(provider.entries[index]),
+                            onDelete: () => _deleteDiaper(provider.entries[index]),
                           );
                         },
-                        childCount: provider.diapers.length,
+                        childCount: provider.entries.length,
                       ),
                     ),
                   ),
@@ -180,7 +181,7 @@ class _DiaperScreenState extends State<DiaperScreen> {
             ),
           );
           if (result == true && mounted) {
-            context.read<DiaperProvider>().loadDiapers();
+            context.read<DiaperProvider>().fetchEntries();
           }
         },
         child: const Icon(Icons.add),
@@ -188,7 +189,7 @@ class _DiaperScreenState extends State<DiaperScreen> {
     );
   }
 
-  void _showDiaperDetails(Diaper diaper) {
+  void _showDiaperDetails(DiaperEntry diaper) {
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
@@ -214,7 +215,7 @@ class _DiaperScreenState extends State<DiaperScreen> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Text(
-                        diaper.timestamp.formatDateTime(),
+                        diaper.changeTime.formatDateTime(),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -271,7 +272,7 @@ class _DiaperScreenState extends State<DiaperScreen> {
     );
   }
 
-  Future<void> _deleteDiaper(Diaper diaper) async {
+  Future<void> _deleteDiaper(DiaperEntry diaper) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -292,7 +293,7 @@ class _DiaperScreenState extends State<DiaperScreen> {
 
     if (confirm == true && mounted) {
       try {
-        await context.read<DiaperProvider>().deleteDiaper(diaper.id!);
+        await context.read<DiaperProvider>().deleteEntry(diaper.id);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -314,6 +315,8 @@ class _DiaperScreenState extends State<DiaperScreen> {
         return Icons.cloud;
       case DiaperType.mixed:
         return Icons.cyclone;
+      case DiaperType.dry:
+        return Icons.check_circle;
     }
   }
 
@@ -326,6 +329,8 @@ class _DiaperScreenState extends State<DiaperScreen> {
         return Colors.brown;
       case DiaperType.mixed:
         return colorScheme.tertiary;
+      case DiaperType.dry:
+        return Colors.grey;
     }
   }
 }

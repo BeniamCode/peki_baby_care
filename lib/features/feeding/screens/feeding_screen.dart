@@ -77,7 +77,11 @@ class _FeedingScreenState extends State<FeedingScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () => provider.fetchEntries(),
+            onRefresh: () async {
+              provider.fetchEntries();
+              // Give a small delay for the UI to update
+              await Future.delayed(const Duration(milliseconds: 500));
+            },
             child: CustomScrollView(
               slivers: [
                 // App Bar

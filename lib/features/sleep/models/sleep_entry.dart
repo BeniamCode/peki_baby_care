@@ -3,6 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum SleepType { nap, night }
 
 class SleepEntry {
+  // Helper method to determine sleep type based on time
+  static SleepType determineSleepTypeFromTime(DateTime time) {
+    final hour = time.hour;
+    // Consider night sleep if between 7 PM and 10 AM
+    if (hour >= 19 || hour < 10) {
+      return SleepType.night;
+    }
+    return SleepType.nap;
+  }
   final String id;
   final String babyId;
   final DateTime startTime;

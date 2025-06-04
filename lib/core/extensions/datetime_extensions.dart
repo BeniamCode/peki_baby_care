@@ -62,4 +62,8 @@ extension DateTimeExtensions on DateTime {
   String formatDate() => DateFormat('EEEE, MMMM d').format(this);
   
   String formatDateTime() => DateFormat('MMM d, h:mm a').format(this);
+  
+  bool isSameDay(DateTime other) {
+    return year == other.year && month == other.month && day == other.day;
+  }
 }

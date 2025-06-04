@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/baby_model.dart';
-import '../../../core/extensions/datetime_extensions.dart';
 
 class BabyInfoCard extends StatelessWidget {
   final BabyModel baby;
@@ -12,7 +11,7 @@ class BabyInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final age = baby.birthDate.calculateAge();
+    final age = baby.ageString;
     final theme = Theme.of(context);
 
     return Card(
@@ -86,14 +85,14 @@ class BabyInfoCard extends StatelessWidget {
                       _buildInfoChip(
                         context,
                         Icons.cake,
-                        baby.birthDate.toFormattedString(),
+                        '${baby.birthDate.day}/${baby.birthDate.month}/${baby.birthDate.year}',
                       ),
                       const SizedBox(width: 8),
                       if (baby.gender != null)
                         _buildInfoChip(
                           context,
-                          baby.gender == 'male' ? Icons.male : Icons.female,
-                          baby.gender!.substring(0, 1).toUpperCase() + baby.gender!.substring(1),
+                          baby.gender == Gender.male ? Icons.male : Icons.female,
+                          baby.gender.toString().split('.').last,
                         ),
                     ],
                   ),

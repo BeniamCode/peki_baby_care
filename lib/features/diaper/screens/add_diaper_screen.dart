@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../data/models/diaper_model.dart';
+import '../models/diaper_entry.dart';
 import '../providers/diaper_provider.dart';
 import '../widgets/diaper_type_selector.dart';
-import '../../../core/utils/date_time_extensions.dart';
+import '../../../core/extensions/datetime_extensions.dart';
 
 class AddDiaperScreen extends StatefulWidget {
-  final Diaper? diaper;
+  final DiaperEntry? diaper;
 
   const AddDiaperScreen({super.key, this.diaper});
 
@@ -28,7 +28,7 @@ class _AddDiaperScreenState extends State<AddDiaperScreen> {
     super.initState();
     if (widget.diaper != null) {
       _selectedType = widget.diaper!.type;
-      _selectedDateTime = widget.diaper!.timestamp;
+      _selectedDateTime = widget.diaper!.changeTime;
       _notesController.text = widget.diaper!.notes ?? '';
       _consistency = widget.diaper!.consistency;
       _color = widget.diaper!.color;
@@ -268,21 +268,29 @@ class _AddDiaperScreenState extends State<AddDiaperScreen> {
 
     try {
       final provider = context.read<DiaperProvider>();
-      final diaper = Diaper(
-        id: widget.diaper?.id,
-        babyId: widget.diaper?.babyId ?? provider.currentBabyId ?? '',
-        type: _selectedType,
-        timestamp: _selectedDateTime,
-        consistency: _consistency,
-        color: _color,
-        hasRash: _hasRash,
-        notes: _notesController.text.isEmpty ? null : _notesController.text,
-      );
-
+      final DiaperEntry diaper;
       if (widget.diaper != null) {
-        await provider.updateDiaper(diaper);
+        diaper = widget.diaper!.copyWith(
+          type: _selectedType,
+          changeTime: _selectedDateTime,
+          consistency: _consistency,
+          color: _color,
+          hasRash: _hasRash,
+          notes: _notesController.text.isEmpty ? null : _notesController.text,
+          updatedAt: DateTime.now(),
+        );
+        await provider.updateEntry(diaper);
       } else {
-        await provider.addDiaper(diaper);
+        diaper = DiaperEntry.create(
+          babyId: provider.currentBabyId ?? '',
+          type: _selectedType,
+          changeTime: _selectedDateTime,
+          consistency: _consistency,
+          color: _color,
+          hasRash: _hasRash,
+          notes: _notesController.text.isEmpty ? null : _notesController.text,
+        );
+        await provider.addEntry(diaper);
       }
 
       if (mounted) {

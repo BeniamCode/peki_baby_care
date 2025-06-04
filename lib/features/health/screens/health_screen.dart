@@ -5,7 +5,7 @@ import '../providers/medicine_provider.dart';
 import '../widgets/medicine_list_tile.dart';
 import '../widgets/medicine_summary_card.dart';
 import '../widgets/upcoming_doses_card.dart';
-import '../../../data/models/medicine_model.dart';
+import '../models/medicine_entry.dart';
 
 class HealthScreen extends StatefulWidget {
   const HealthScreen({super.key});
@@ -20,7 +20,7 @@ class _HealthScreenState extends State<HealthScreen> {
     super.initState();
     // Load medicines when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MedicineProvider>().loadMedicines();
+      context.read<MedicineProvider>().fetchEntries();
     });
   }
 
@@ -37,7 +37,7 @@ class _HealthScreenState extends State<HealthScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final todaysMedicines = medicineProvider.todaysMedicines;
+          final todaysMedicines = medicineProvider.todayEntries;
           final upcomingDoses = medicineProvider.upcomingDoses;
 
           if (todaysMedicines.isEmpty && upcomingDoses.isEmpty) {
@@ -45,7 +45,7 @@ class _HealthScreenState extends State<HealthScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () => medicineProvider.loadMedicines(),
+            onRefresh: () => medicineProvider.fetchEntries(),
             child: CustomScrollView(
               slivers: [
                 // Medicine Summary Card
@@ -53,7 +53,7 @@ class _HealthScreenState extends State<HealthScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: MedicineSummaryCard(
-                      completedCount: medicineProvider.completedTodayCount,
+                      completedCount: medicineProvider.todayEntries.where((m) => m.isCompleted).length,
                       totalCount: todaysMedicines.length,
                     ),
                   ),
@@ -105,12 +105,13 @@ class _HealthScreenState extends State<HealthScreen> {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: MedicineListTile(
-                            medicine: medicine,
+                            entry: medicine,
                             onToggleComplete: () {
-                              medicineProvider.toggleMedicineCompletion(
-                                medicine.id!,
-                                !medicine.isCompleted,
-                              );
+                              if (medicine.isCompleted) {
+                                // Already completed, no action needed
+                              } else {
+                                medicineProvider.completeMedication(medicine.id);
+                              }
                             },
                             onTap: () => _showMedicineDetails(context, medicine),
                           ),
@@ -141,17 +142,19 @@ class _HealthScreenState extends State<HealthScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final medicine = medicineProvider.historyMedicines[index];
+                        final historyEntries = medicineProvider.entries.where((e) => e.isCompleted).toList();
+                        if (index >= historyEntries.length) return const SizedBox.shrink();
+                        final medicine = historyEntries[index];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: MedicineListTile(
-                            medicine: medicine,
+                            entry: medicine,
                             isHistoryItem: true,
                             onTap: () => _showMedicineDetails(context, medicine),
                           ),
                         );
                       },
-                      childCount: medicineProvider.historyMedicines.length,
+                      childCount: medicineProvider.entries.where((e) => e.isCompleted).length,
                     ),
                   ),
                 ),
@@ -177,7 +180,7 @@ class _HealthScreenState extends State<HealthScreen> {
             Icon(
               Icons.medical_information_outlined,
               size: 80,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -189,7 +192,7 @@ class _HealthScreenState extends State<HealthScreen> {
               'Start tracking your baby\'s medicines by tapping the + button',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
             ),
           ],
@@ -198,7 +201,7 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 
-  void _showMedicineDetails(BuildContext context, MedicineModel medicine) {
+  void _showMedicineDetails(BuildContext context, MedicineEntry medicine) {
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
@@ -211,7 +214,7 @@ class _HealthScreenState extends State<HealthScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  medicine.name,
+                  medicine.medicineName,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 IconButton(
@@ -221,7 +224,7 @@ class _HealthScreenState extends State<HealthScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            _buildDetailRow('Dosage', medicine.dosage),
+            _buildDetailRow('Dosage', '${medicine.dosage} ${medicine.unit.toString().split('.').last}'),
             const SizedBox(height: 8),
             _buildDetailRow(
               'Time Administered',
@@ -253,10 +256,7 @@ class _HealthScreenState extends State<HealthScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        context.read<MedicineProvider>().toggleMedicineCompletion(
-                              medicine.id!,
-                              true,
-                            );
+                        context.read<MedicineProvider>().completeMedication(medicine.id);
                         Navigator.pop(context);
                       },
                       child: const Text('Mark as Given'),
@@ -266,7 +266,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 Expanded(
                   child: TextButton(
                     onPressed: () {
-                      context.read<MedicineProvider>().deleteMedicine(medicine.id!);
+                      context.read<MedicineProvider>().deleteEntry(medicine.id);
                       Navigator.pop(context);
                     },
                     style: TextButton.styleFrom(
@@ -290,7 +290,7 @@ class _HealthScreenState extends State<HealthScreen> {
         Text(
           label,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
         ),
         Text(

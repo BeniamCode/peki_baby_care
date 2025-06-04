@@ -104,8 +104,6 @@ class DiaperRepository {
           case DiaperType.dry:
             // Dry diapers don't count towards wet/dirty counts
             break;
-            mixedCount++;
-            break;
         }
       }
 

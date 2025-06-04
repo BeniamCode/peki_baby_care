@@ -7,8 +7,7 @@ import '../../sleep/providers/sleep_provider.dart';
 import '../../diaper/providers/diaper_provider.dart';
 import '../../health/providers/medicine_provider.dart';
 import '../../../data/models/feeding_model.dart';
-import '../../../data/models/diaper_model.dart';
-import '../../diaper/models/diaper_entry.dart'; // For DiaperType enum
+import '../../diaper/models/diaper_entry.dart' as diaper_models; // For DiaperType enum
 import '../widgets/baby_info_card.dart';
 import '../widgets/activity_summary_card.dart';
 import '../widgets/quick_actions_grid.dart';
@@ -47,13 +46,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final diaperProvider = context.read<DiaperProvider>();
     final medicineProvider = context.read<MedicineProvider>();
     
-    await Future.wait([
-      babyProvider.loadBabies(),
-      feedingProvider.fetchEntries(),
-      sleepProvider.fetchEntries(),
-      diaperProvider.fetchEntries(),
-      medicineProvider.fetchEntries(),
-    ]);
+    // Load babies and fetch entries for each provider (these are void methods that trigger stream subscriptions)
+    babyProvider.loadBabies();
+    feedingProvider.fetchEntries();
+    sleepProvider.fetchEntries();
+    diaperProvider.fetchEntries();
+    medicineProvider.fetchEntries();
   }
 
   @override
@@ -254,23 +252,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return parts.isEmpty ? 'No feedings today' : parts.join(', ');
   }
 
-  String _buildDiaperDetails(List<DiaperEntry> diapers) {
+  String _buildDiaperDetails(List<diaper_models.DiaperEntry> diapers) {
     int wet = 0;
     int soiled = 0;
     int mixed = 0;
 
     for (final diaper in diapers) {
       switch (diaper.type) {
-        case DiaperType.wet:
+        case diaper_models.DiaperType.wet:
           wet++;
           break;
-        case DiaperType.dirty:
+        case diaper_models.DiaperType.dirty:
           soiled++;
           break;
-        case DiaperType.mixed:
+        case diaper_models.DiaperType.mixed:
           mixed++;
           break;
-        case DiaperType.dry:
+        case diaper_models.DiaperType.dry:
           // Dry diapers don't count in summary
           break;
       }

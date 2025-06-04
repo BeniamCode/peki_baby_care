@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../data/models/medicine_model.dart';
+import '../models/medicine_entry.dart';
 import '../../../core/extensions/datetime_extensions.dart';
 
 class UpcomingDosesCard extends StatelessWidget {
-  final List<MedicineModel> medicines;
+  final List<MedicineEntry> medicines;
 
   const UpcomingDosesCard({
     super.key,
@@ -15,7 +15,7 @@ class UpcomingDosesCard extends StatelessWidget {
     final theme = Theme.of(context);
     
     // Sort medicines by next dose time
-    final sortedMedicines = List<MedicineModel>.from(medicines)
+    final sortedMedicines = List<MedicineEntry>.from(medicines)
       ..sort((a, b) {
         if (a.nextDoseTime == null) return 1;
         if (b.nextDoseTime == null) return -1;
@@ -65,7 +65,7 @@ class UpcomingDosesCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDoseItem(BuildContext context, MedicineModel medicine) {
+  Widget _buildDoseItem(BuildContext context, MedicineEntry medicine) {
     final theme = Theme.of(context);
     final now = DateTime.now();
     final timeUntilDose = medicine.nextDoseTime!.difference(now);
@@ -109,7 +109,7 @@ class UpcomingDosesCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        medicine.name,
+                        medicine.medicineName,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: theme.colorScheme.onSecondaryContainer,
                           fontWeight: FontWeight.w500,
@@ -144,16 +144,16 @@ class UpcomingDosesCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      medicine.dosage,
+                      '${medicine.dosage} ${medicine.unit.toString().split('.').last}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer.withOpacity(0.7),
+                        color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '• ${medicine.nextDoseTime!.formatTime()}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer.withOpacity(0.7),
+                        color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
                       ),
                     ),
                   ],

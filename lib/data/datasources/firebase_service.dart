@@ -83,7 +83,10 @@ class FirebaseService {
   }) {
     Query<Map<String, dynamic>> query = collection(collectionPath);
     if (queryBuilder != null) {
-      query = queryBuilder(query);
+      final modifiedQuery = queryBuilder(query);
+      if (modifiedQuery != null) {
+        query = modifiedQuery;
+      }
     }
     return query.snapshots();
   }

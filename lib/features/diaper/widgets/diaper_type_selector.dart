@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../data/models/diaper_model.dart';
+import '../models/diaper_entry.dart';
 
 class DiaperTypeSelector extends StatelessWidget {
   final DiaperType selectedType;
@@ -76,7 +76,7 @@ class _TypeButton extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+        color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
         border: Border.all(
           color: isSelected ? color : colorScheme.outline,
           width: isSelected ? 2 : 1,

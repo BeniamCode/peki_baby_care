@@ -74,7 +74,7 @@ class DiaperProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _entries = await _repository.getEntriesByBabyId(_currentBabyId!);
+      _entries = await _repository.getEntriesForBaby(_currentBabyId!);
       _entries.sort((a, b) => b.changeTime.compareTo(a.changeTime));
     } catch (e) {
       _error = 'Failed to load diaper entries. Please try again.';
@@ -93,7 +93,8 @@ class DiaperProvider extends ChangeNotifier {
 
     try {
       final newEntry = entry.copyWith(babyId: _currentBabyId);
-      final savedEntry = await _repository.createEntry(newEntry);
+      final entryId = await _repository.addEntry(newEntry);
+      final savedEntry = newEntry.copyWith(id: entryId);
       _entries.insert(0, savedEntry);
       notifyListeners();
     } catch (e) {
@@ -109,7 +110,8 @@ class DiaperProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final updatedEntry = await _repository.updateEntry(entry);
+      await _repository.updateEntry(entry);
+      final updatedEntry = entry;
       final index = _entries.indexWhere((e) => e.id == entry.id);
       if (index != -1) {
         _entries[index] = updatedEntry;
